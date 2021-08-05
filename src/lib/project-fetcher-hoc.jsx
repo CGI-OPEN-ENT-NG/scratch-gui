@@ -22,6 +22,7 @@ import {
 
 import log from './log';
 import storage from './storage';
+import axios from 'axios';
 
 /* Higher Order Component to provide behavior for loading projects by id. If
  * there's no id, the default project is loaded.
@@ -68,16 +69,23 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject (projectId, loadingState) {
-            return storage
-                .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON)
-                .then(projectAsset => {
-                    if (projectAsset) {
-                        this.props.onFetchedProjectData(projectAsset.data, loadingState);
-                    } else {
-                        // Treat failure to load as an error
-                        // Throw to be caught by catch later on
-                        throw new Error('Could not find project');
+            const config = {
+                method: 'get',
+                url: projectId,
+                headers: {
+                    Authorization: 'Basic ????'
+                }
+            };
+            axios(config)
+                .then(response => response.json())
+                .then(data => {
+                    const binaryString = window.atob(data.base64);
+                    const binaryLen = binaryString.length;
+                    const bytes = new Uint8Array(binaryLen);
+                    for (let i = 0; i < binaryLen; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
                     }
+                    this.props.onFetchedProjectData(bytes, loadingState);
                 })
                 .catch(err => {
                     this.props.onError(err);
