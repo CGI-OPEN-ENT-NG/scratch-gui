@@ -76,16 +76,27 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                     Authorization: 'Basic ????'
                 }
             };
-            axios(config)
-                .then(response => response.json())
-                .then(data => {
-                    const binaryString = window.atob(data.base64);
-                    const binaryLen = binaryString.length;
-                    const bytes = new Uint8Array(binaryLen);
-                    for (let i = 0; i < binaryLen; i++) {
-                        bytes[i] = binaryString.charCodeAt(i);
+            return axios(config)
+                .then(response => {
+                    if (response && response.data && response.data.base64File) {
+                        const binaryString = window.atob(response.data.base64File);
+                        const binaryLen = binaryString.length;
+                        const bytes = new Uint8Array(binaryLen);
+                        for (let i = 0; i < binaryLen; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        this.props.onFetchedProjectData(bytes, loadingState);
+                    } else {
+                        storage
+                            .load(storage.AssetType.Project, '', storage.DataFormat.JSON)
+                            .then(projectAsset => {
+                                this.props.onFetchedProjectData(projectAsset.data, loadingState);
+                            })
+                            .catch(err => {
+                                this.props.onError(err);
+                                log.error(err);
+                            });
                     }
-                    this.props.onFetchedProjectData(bytes, loadingState);
                 })
                 .catch(err => {
                     this.props.onError(err);
