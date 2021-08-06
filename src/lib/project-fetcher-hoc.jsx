@@ -88,7 +88,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                         this.props.onFetchedProjectData(bytes, loadingState);
                     } else {
                         storage
-                            .load(storage.AssetType.Project, '', storage.DataFormat.JSON)
+                            .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
                             .then(projectAsset => {
                                 this.props.onFetchedProjectData(projectAsset.data, loadingState);
                             })
