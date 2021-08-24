@@ -15,6 +15,7 @@ import {
     projectError,
     setProjectId
 } from '../reducers/project-state';
+import {setProjectTitle} from '../reducers/project-title';
 import {
     activateTab,
     BLOCKS_TAB_INDEX
@@ -80,6 +81,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 .then(response => {
                     if (response && response.data && response.data.base64File) {
                         const binaryString = window.atob(response.data.base64File);
+                        this.props.setProjectTitle(response.data.title);
                         const binaryLen = binaryString.length;
                         const bytes = new Uint8Array(binaryLen);
                         for (let i = 0; i < binaryLen; i++) {
@@ -118,6 +120,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 projectId,
                 reduxProjectId,
                 setProjectId: setProjectIdProp,
+                setProjectTitle: setProjectTitleProp,
                 /* eslint-enable no-unused-vars */
                 isFetchingWithId: isFetchingWithIdProp,
                 ...componentProps
@@ -146,7 +149,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         projectHost: PropTypes.string,
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        setProjectId: PropTypes.func
+        setProjectId: PropTypes.func,
+        setProjectTitle: PropTypes.func
     };
     ProjectFetcherComponent.defaultProps = {
         assetHost: 'https://assets.scratch.mit.edu',
@@ -167,6 +171,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         onFetchedProjectData: (projectData, loadingState) =>
             dispatch(onFetchedProjectData(projectData, loadingState)),
         setProjectId: projectId => dispatch(setProjectId(projectId)),
+        setProjectTitle: title => dispatch(setProjectTitle(title)),
         onProjectUnchanged: () => dispatch(setProjectUnchanged())
     });
     // Allow incoming props to override redux-provided props. Used to mock in tests.
