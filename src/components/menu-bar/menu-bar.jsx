@@ -171,7 +171,9 @@ class MenuBar extends React.Component {
             'handleLanguageMouseUp',
             'handleRestoreOption',
             'getSaveToComputerHandler',
-            'restoreOptionMessage'
+            'restoreOptionMessage',
+            'handleClickUpdateToEnt',
+            'saveToEnt'
         ]);
     }
     componentDidMount () {
@@ -180,7 +182,14 @@ class MenuBar extends React.Component {
     componentWillUnmount () {
         document.removeEventListener('keydown', this.handleKeyPress);
     }
+    saveToEnt () {
+        // @todo create new file and save it to ENT
+        // axios.post('');
+    }
+    handleClickUpdateToEnt () {
+    }
     handleClickNew () {
+        this.saveToEnt();
         // if the project is dirty, and user owns the project, we will autosave.
         // but if they are not logged in and can't save, user should consider
         // downloading or logging in first.
@@ -439,6 +448,18 @@ class MenuBar extends React.Component {
                                         >
                                             {newProjectMessage}
                                         </MenuItem>
+                                    </MenuSection>
+                                    <MenuSection>
+                                        <SB3Downloader useEntSave>
+                                            {(className, downloadProjectCallback) => (
+                                                <MenuItem
+                                                    className={className}
+                                                    onClick={this.getSaveToComputerHandler(downloadProjectCallback)}
+                                                >
+                                                    {'Enregistrer les modifications'}
+                                                </MenuItem>
+                                            )}
+                                        </SB3Downloader>
                                     </MenuSection>
                                     {(this.props.canSave || this.props.canCreateCopy || this.props.canRemix) && (
                                         <MenuSection>

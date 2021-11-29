@@ -4,6 +4,10 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {projectTitleInitialState} from '../reducers/project-title';
 import downloadBlob from '../lib/download-blob';
+import axios from 'axios';
+
+import EntConfig from '../config/ent-config';
+
 /**
  * Project saver component passes a downloadProject function to its child.
  * It expects this child to be a function with the signature
@@ -22,7 +26,8 @@ class SB3Downloader extends React.Component {
     constructor (props) {
         super(props);
         bindAll(this, [
-            'downloadProject'
+            'downloadProject',
+            'updateProjectToEnt'
         ]);
     }
     downloadProject () {
@@ -30,16 +35,62 @@ class SB3Downloader extends React.Component {
             if (this.props.onSaveFinished) {
                 this.props.onSaveFinished();
             }
+            // sauvegarde du fichier
             downloadBlob(this.props.projectFilename, content);
+        });
+    }
+    updateProjectToEnt () {
+        // update project (saving) (.sb3) to ENT
+        this.props.saveProjectSb3().then(content => {
+            if (this.props.onSaveFinished) {
+                this.props.onSaveFinished();
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(content);
+            reader.onloadend = () => {
+                const res = reader.result;
+
+                const mimetypes = /base64,(.+)/.exec(res)[0].split(':')[1];
+                const base64data = /base64,(.+)/.exec(res)[1];
+
+                const projectIdUrl = new URL(this.props.reduxProjectId);
+                const entUrl = projectIdUrl.host;
+                const entId = projectIdUrl.split('/').pop();
+
+                const authBasicLogin = EntConfig.AUTH_BASIC_LOGIN;
+                const authBasicPassword = EntConfig.AUTH_BASIC_PASSWORD;
+                const entUsername = EntConfig.ENT_USERNAME;
+                const entUserId = EntConfig.ENT_USER_ID;
+
+                const base64basic = window.btoa(unescape(encodeURIComponent(`${authBasicLogin}:${authBasicPassword}`)));
+
+                // update
+                axios.put(`${entUrl}/scratch/file?ent_id=${entId}`, {
+                    name: this.props.projectFilename,
+                    mimetypes: mimetypes,
+                    content: base64data
+                }, {
+                    headers: {
+                        'Authorization': `Basic ${base64basic}`,
+                        'User-Name': entUsername,
+                        'User-Id': entUserId
+                    }
+                }).then(() => {
+
+                }).catch(() => {
+                    // console.error(err);
+                });
+            };
         });
     }
     render () {
         const {
             children
         } = this.props;
+
         return children(
             this.props.className,
-            this.downloadProject
+            this.props.useEntSave ? this.updateProjectToEnt : this.downloadProject
         );
     }
 }
@@ -57,7 +108,9 @@ SB3Downloader.propTypes = {
     className: PropTypes.string,
     onSaveFinished: PropTypes.func,
     projectFilename: PropTypes.string,
-    saveProjectSb3: PropTypes.func
+    saveProjectSb3: PropTypes.func,
+    useEntSave: PropTypes.bool,
+    reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 SB3Downloader.defaultProps = {
     className: ''

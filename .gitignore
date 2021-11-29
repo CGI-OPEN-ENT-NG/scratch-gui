@@ -17,3 +17,8 @@ npm-*
 # Generated translation files
 /translations
 /locale
+
+.idea
+.vscode
+
+src/config/ent-config.js

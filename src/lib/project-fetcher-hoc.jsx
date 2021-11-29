@@ -4,6 +4,8 @@ import {intlShape, injectIntl} from 'react-intl';
 import bindAll from 'lodash.bindall';
 import {connect} from 'react-redux';
 
+import EntConfig from '../config/ent-config';
+
 import {setProjectUnchanged} from '../reducers/project-changed';
 import {
     LoadingStates,
@@ -70,11 +72,16 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject (projectId, loadingState) {
+            const base64basic = window.btoa(
+                unescape(
+                    encodeURIComponent(`${EntConfig.AUTH_BASIC_LOGIN}:${EntConfig.AUTH_BASIC_PASSWORD}`)
+                )
+            );
             const config = {
                 method: 'get',
                 url: projectId,
                 headers: {
-                    Authorization: 'Basic ????'
+                    Authorization: `Basic ${base64basic}`
                 }
             };
             return axios(config)
