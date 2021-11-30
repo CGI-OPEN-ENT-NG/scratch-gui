@@ -55,8 +55,8 @@ class SB3Downloader extends React.Component {
                 const base64data = /base64,(.+)/.exec(res)[1];
 
                 const projectIdUrl = new URL(_this.props.reduxProjectId);
-                const entUrl = projectIdUrl.host;
-                const entId = projectIdUrl.split('/').pop();
+                const entUrl = `${projectIdUrl.origin}/`;
+                const entId = projectIdUrl.href.split('/').pop();
 
                 const authBasicLogin = EntConfig.AUTH_BASIC_LOGIN;
                 const authBasicPassword = EntConfig.AUTH_BASIC_PASSWORD;
@@ -66,7 +66,7 @@ class SB3Downloader extends React.Component {
                 const base64basic = window.btoa(unescape(encodeURIComponent(`${authBasicLogin}:${authBasicPassword}`)));
 
                 // update
-                axios.put(`${entUrl}/scratch/file?ent_id=${entId}`, {
+                axios.put(`${entUrl}scratch/file?ent_id=${entId}`, {
                     name: this.props.projectFilename,
                     mimetypes: mimetypes,
                     content: base64data
@@ -119,6 +119,7 @@ SB3Downloader.defaultProps = {
 
 const mapStateToProps = state => ({
     saveProjectSb3: state.scratchGui.vm.saveProjectSb3.bind(state.scratchGui.vm),
+    reduxProjectId: state.scratchGui.projectState.projectId,
     projectFilename: getProjectFilename(state.scratchGui.projectTitle, projectTitleInitialState)
 });
 
