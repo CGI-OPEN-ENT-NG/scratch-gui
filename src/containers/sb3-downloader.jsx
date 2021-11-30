@@ -41,6 +41,7 @@ class SB3Downloader extends React.Component {
     }
     updateProjectToEnt () {
         // update project (saving) (.sb3) to ENT
+        const _this = this;
         this.props.saveProjectSb3().then(content => {
             if (this.props.onSaveFinished) {
                 this.props.onSaveFinished();
@@ -53,7 +54,7 @@ class SB3Downloader extends React.Component {
                 const mimetypes = /base64,(.+)/.exec(res)[0].split(':')[1];
                 const base64data = /base64,(.+)/.exec(res)[1];
 
-                const projectIdUrl = new URL(this.props.reduxProjectId);
+                const projectIdUrl = new URL(_this.props.reduxProjectId);
                 const entUrl = projectIdUrl.host;
                 const entId = projectIdUrl.split('/').pop();
 
