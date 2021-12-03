@@ -88,7 +88,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 .then(response => {
                     if (response && response.data && response.data.base64File) {
                         const binaryString = window.atob(response.data.base64File);
-                        this.props.setProjectTitle(response.data.title);
+                        this.props.setProjectTitle(response.data.title.split('.sb3')[0]);
                         const binaryLen = binaryString.length;
                         const bytes = new Uint8Array(binaryLen);
                         for (let i = 0; i < binaryLen; i++) {

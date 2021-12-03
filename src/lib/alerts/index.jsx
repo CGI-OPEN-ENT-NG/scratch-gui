@@ -212,6 +212,36 @@ const alerts = [
         ),
         iconSpinner: true,
         level: AlertLevels.SUCCESS
+    },
+    {
+        alertId: 'savingEnt',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        content: (
+            <span>{"Enregistrement dans l'ENT"}</span>
+        ),
+        iconSpinner: true,
+        level: AlertLevels.SUCCESS
+    },
+    {
+        alertId: 'savingEntSuccess',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        content: (
+            <span>{"Enregistrement dans l'ENT réussi"}</span>
+        ),
+        closeButton: true,
+        level: AlertLevels.SUCCESS
+    },
+    {
+        alertId: 'savingEntError',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        content: (
+            <span>{"Erreur d'enregistrement dans l'ENT"}</span>
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN
     }
 ];
 
