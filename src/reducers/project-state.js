@@ -17,6 +17,7 @@ const SET_OLD_PROJECT_ID = 'scratch-gui/project-state/SET_OLD_PROJECT_ID';
 const SET_SESSION_ID = 'scratch-gui/project-state/SET_USER_ID';
 const SET_OLD_SESSION_ID = 'scratch-gui/project-state/SET_OLD_SESSION_ID';
 const SET_USER_DISPLAY_NAME = 'scratch-gui/project-state/SET_USER_DISPLAY_NAME';
+const SET_IS_NEW_PROJECT = 'scratch-gui/project-state/SET_IS_NEW_PROJECT';
 const START_AUTO_UPDATING = 'scratch-gui/project-state/START_AUTO_UPDATING';
 const START_CREATING_NEW = 'scratch-gui/project-state/START_CREATING_NEW';
 const START_ERROR = 'scratch-gui/project-state/START_ERROR';
@@ -116,6 +117,7 @@ const initialState = {
     sessionId: null,
     oldSessionId: null,
     userDisplayName: null,
+    isNewProject: false,
     loadingState: LoadingState.NOT_LOADED
 };
 
@@ -240,6 +242,10 @@ const reducer = function (state, action) {
         }
         return Object.assign({}, state, {
             loadingState: LoadingState.SHOWING_WITH_ID
+        });
+    case SET_IS_NEW_PROJECT:
+        return Object.assign({}, state, {
+            isNewProject: action.isNewProject
         });
     case SET_PROJECT_ID:
         // if the projectId hasn't actually changed do nothing
@@ -504,6 +510,11 @@ const setSessionId = sessionId => ({
     sessionId: sessionId
 });
 
+const setIsNewProject = isNewProject => ({
+    type: SET_IS_NEW_PROJECT,
+    isNewProject: isNewProject
+});
+
 const setOldSessionId = oldSessionId => ({
     type: SET_OLD_SESSION_ID,
     oldSessionId: oldSessionId
@@ -585,5 +596,6 @@ export {
     setOldProjectId,
     setSessionId,
     setOldSessionId,
-    setUserDisplayName
+    setUserDisplayName,
+    setIsNewProject
 };

@@ -18,7 +18,8 @@ import {
     setProjectId,
     setOldProjectId,
     setSessionId,
-    setUserDisplayName
+    setUserDisplayName,
+    setIsNewProject
 } from '../reducers/project-state';
 import {setProjectTitle} from '../reducers/project-title';
 import {
@@ -93,7 +94,9 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                     password: EntConfig.AUTH_BASIC_PASSWORD
                 }
             };
-            if (!projectId || parseInt(projectId, 10) === 0) {
+
+            const initNewLocalProject = () => {
+                this.props.setIsNewProject(true);
                 storage
                     .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
                     .then(projectAsset => {
@@ -103,13 +106,19 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                         this.props.onError(err);
                         log.error(err);
                     });
+            };
+
+            if (!projectId || parseInt(projectId, 10) === 0) {
+                initNewLocalProject();
                 return;
             }
             this.props.setOldProjectId(projectId);
 
             return axios(config)
                 .then(response => {
-                    if (response && response.data && response.data.base64File) {
+                    if (response && response.data && response.data['newFile']) {
+                        initNewLocalProject();
+                    } else if (response && response.data && response.data.base64File) {
                         const binaryString = window.atob(response.data.base64File);
                         this.props.setProjectTitle(response.data.title.split('.sb3')[0]);
                         const binaryLen = binaryString.length;
@@ -123,15 +132,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 .catch(err => {
                     this.props.onError(err);
                     log.error(err);
-                    storage
-                        .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
-                        .then(projectAsset => {
-                            this.props.onFetchedProjectData(projectAsset.data, loadingState);
-                        })
-                        .catch(err => {
-                            this.props.onError(err);
-                            log.error(err);
-                        });
+                    initNewLocalProject();
                 });
         }
         render () {
@@ -154,6 +155,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 setSessionId: setSessionIdProp,
                 setUserDisplayName: setUserDisplayNameProp,
                 setProjectTitle: setProjectTitleProp,
+                setIsNewProject: setIsNewProjectProp,
                 /* eslint-enable no-unused-vars */
                 isFetchingWithId: isFetchingWithIdProp,
                 ...componentProps
@@ -187,7 +189,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         setOldProjectId: PropTypes.func,
         setSessionId: PropTypes.func,
         setUserDisplayName: PropTypes.func,
-        setProjectTitle: PropTypes.func
+        setProjectTitle: PropTypes.func,
+        setIsNewProject: PropTypes.func
     };
     ProjectFetcherComponent.defaultProps = {
         assetHost: 'https://assets.scratch.mit.edu',
@@ -213,6 +216,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         setSessionId: sessionId => dispatch(setSessionId(sessionId)),
         setUserDisplayName: userDisplayName => dispatch(setUserDisplayName(userDisplayName)),
         setProjectTitle: title => dispatch(setProjectTitle(title)),
+        setIsNewProject: isNewProject => dispatch(setIsNewProject(isNewProject)),
         onProjectUnchanged: () => dispatch(setProjectUnchanged())
     });
     // Allow incoming props to override redux-provided props. Used to mock in tests.

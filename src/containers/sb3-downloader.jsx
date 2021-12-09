@@ -11,7 +11,7 @@ import {showStandardAlert} from '../reducers/alerts';
 import EntConfig from '../config/ent-config';
 import downloadBlob from '../lib/download-blob';
 import {generateRandomStr, setSessionCookie} from '../lib/session-helper';
-import {setSessionId} from '../reducers/project-state';
+import {setSessionId, setOldSessionId, setProjectId, setOldProjectId, setIsNewProject} from '../reducers/project-state';
 /**
  * Project saver component passes a downloadProject function to its child.
  * It expects this child to be a function with the signature
@@ -51,7 +51,7 @@ class SB3Downloader extends React.Component {
         const oldSessionId = this.props.sessionId;
         const newSessionId = generateRandomStr();
 
-        if (accessId && parseInt(accessId, 10) !== 0) {
+        if (accessId && parseInt(accessId, 10) !== 0 && !this.props.isNewProject) {
             this.updateProjectToEnt();
         } else {
             // nouveau fichier
@@ -85,10 +85,15 @@ class SB3Downloader extends React.Component {
                             username: EntConfig.AUTH_BASIC_LOGIN,
                             password: EntConfig.AUTH_BASIC_PASSWORD
                         }
-                    }).then(() => {
+                    }).then(res => {
                         this.props.openSaveSuccessModal();
                         setSessionCookie(newSessionId);
                         this.props.setSessionId(newSessionId);
+                        this.props.setOldSessionId(newSessionId);
+                        this.props.setProjectId(res.data['newId']);
+                        this.props.setOldProjectId(res.data['newId']);
+                        this.props.setIsNewProject(false);
+                        window.location.hash = res.data['newId'];
                     })
                         .catch(err => {
                             switch (err.response.status) {
@@ -144,6 +149,8 @@ class SB3Downloader extends React.Component {
                     this.props.openSaveSuccessModal();
                     setSessionCookie(newSessionId);
                     this.props.setSessionId(newSessionId);
+                    this.props.setOldSessionId(newSessionId);
+                    this.props.setIsNewProject(false);
                 })
                     .catch(err => {
                         switch (err.response.status) {
@@ -187,7 +194,12 @@ SB3Downloader.propTypes = {
     reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     oldProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    isNewProject: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     setSessionId: PropTypes.func,
+    setOldSessionId: PropTypes.func,
+    setProjectId: PropTypes.func,
+    setOldProjectId: PropTypes.func,
+    setIsNewProject: PropTypes.func,
     openSavingModal: PropTypes.func,
     openSaveSuccessModal: PropTypes.func,
     openSaveFailedModal: PropTypes.func,
@@ -211,13 +223,18 @@ const mapDispatchToProps = dispatch => ({
     openSaveUnauthorizedModal: () => {
         dispatch(showStandardAlert('savingEntUnauthorized'));
     },
-    setSessionId: sessionId => dispatch(setSessionId(sessionId))
+    setSessionId: sessionId => dispatch(setSessionId(sessionId)),
+    setOldSessionId: id => dispatch(setOldSessionId(id)),
+    setProjectId: id => dispatch(setProjectId(id)),
+    setOldProjectId: id => dispatch(setOldProjectId(id)),
+    setIsNewProject: isNewProject => dispatch(setIsNewProject(isNewProject))
 });
 
 const mapStateToProps = state => ({
     saveProjectSb3: state.scratchGui.vm.saveProjectSb3.bind(state.scratchGui.vm),
     reduxProjectId: state.scratchGui.projectState.projectId,
     sessionId: state.scratchGui.projectState.sessionId,
+    isNewProject: state.scratchGui.projectState.isNewProject,
     oldProjectId: state.scratchGui.projectState.oldProjectId,
     projectFilename: getProjectFilename(state.scratchGui.projectTitle, projectTitleInitialState)
 });
