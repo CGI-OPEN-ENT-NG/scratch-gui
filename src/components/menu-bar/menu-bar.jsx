@@ -171,9 +171,7 @@ class MenuBar extends React.Component {
             'handleLanguageMouseUp',
             'handleRestoreOption',
             'getSaveToComputerHandler',
-            'restoreOptionMessage',
-            'handleClickUpdateToEnt',
-            'saveToEnt'
+            'restoreOptionMessage'
         ]);
     }
     componentDidMount () {
@@ -182,19 +180,13 @@ class MenuBar extends React.Component {
     componentWillUnmount () {
         document.removeEventListener('keydown', this.handleKeyPress);
     }
-    saveToEnt () {
-        // @todo create new file and save it to ENT
-        // axios.post('');
-    }
-    handleClickUpdateToEnt () {
-    }
-    handleClickNew () {
-        this.saveToEnt();
+    handleClickNew (ev) {
         // if the project is dirty, and user owns the project, we will autosave.
         // but if they are not logged in and can't save, user should consider
         // downloading or logging in first.
         // Note that if user is logged in and editing someone else's project,
         // they'll lose their work.
+        ev.stopPropagation();
         const readyToReplaceProject = this.props.confirmReadyToReplaceProject(
             this.props.intl.formatMessage(sharedMessages.replaceProjectWarning)
         );

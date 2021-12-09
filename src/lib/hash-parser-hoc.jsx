@@ -6,7 +6,9 @@ import {connect} from 'react-redux';
 import {
     defaultProjectId,
     getIsFetchingWithoutId,
-    setProjectId
+    setProjectId,
+    setSessionId,
+    setUserDisplayName
 } from '../reducers/project-state';
 
 /* Higher Order Component to get the project id from location.hash
@@ -38,8 +40,10 @@ const HashParserHOC = function (WrappedComponent) {
         }
         handleHashChange () {
             const hashMatch = window.location.hash.match(/#?(.*)$/);
-            const hashProjectId = hashMatch === null ? defaultProjectId : hashMatch[1];
-            this.props.setProjectId(hashProjectId.toString());
+            const hashProjectId = hashMatch === null ? defaultProjectId : hashMatch[1].toString();
+            // const url = new URL(window.location);
+            // const hashProjectId= url.searchParams.get('ent_id');
+            this.props.setProjectId(hashProjectId);
         }
         render () {
             const {
@@ -47,6 +51,8 @@ const HashParserHOC = function (WrappedComponent) {
                 isFetchingWithoutId: isFetchingWithoutIdProp,
                 reduxProjectId,
                 setProjectId: setProjectIdProp,
+                setSessionId: setSessionIdProp,
+                setUserDisplayName: setUserDisplayNameProp,
                 /* eslint-enable no-unused-vars */
                 ...componentProps
             } = this.props;
@@ -60,7 +66,9 @@ const HashParserHOC = function (WrappedComponent) {
     HashParserComponent.propTypes = {
         isFetchingWithoutId: PropTypes.bool,
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        setProjectId: PropTypes.func
+        setProjectId: PropTypes.func,
+        setSessionId: PropTypes.func,
+        setUserDisplayName: PropTypes.func
     };
     const mapStateToProps = state => {
         const loadingState = state.scratchGui.projectState.loadingState;
@@ -72,6 +80,12 @@ const HashParserHOC = function (WrappedComponent) {
     const mapDispatchToProps = dispatch => ({
         setProjectId: projectId => {
             dispatch(setProjectId(projectId));
+        },
+        setSessionId: sessionId => {
+            dispatch(setSessionId(sessionId));
+        },
+        setUserDisplayName: userDisplayName => {
+            dispatch(setUserDisplayName(userDisplayName));
         }
     });
     // Allow incoming props to override redux-provided props. Used to mock in tests.

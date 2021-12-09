@@ -216,7 +216,7 @@ const alerts = [
     {
         alertId: 'savingEnt',
         alertType: AlertTypes.STANDARD,
-        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError', 'savingEntUnauthorized'],
         content: (
             <span>{"Enregistrement dans l'ENT"}</span>
         ),
@@ -226,7 +226,7 @@ const alerts = [
     {
         alertId: 'savingEntSuccess',
         alertType: AlertTypes.STANDARD,
-        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError', 'savingEntUnauthorized'],
         content: (
             <span>{"Enregistrement dans l'ENT réussi"}</span>
         ),
@@ -234,9 +234,19 @@ const alerts = [
         level: AlertLevels.SUCCESS
     },
     {
+        alertId: 'savingEntUnauthorized',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError', 'savingEntUnauthorized'],
+        content: (
+            <span>{"Vous n'avez pas les droits nécessaires pour enregistrer ce fichier"}</span>
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN
+    },
+    {
         alertId: 'savingEntError',
         alertType: AlertTypes.STANDARD,
-        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError'],
+        clearList: ['savingEnt', 'savingEntSuccess', 'savingEntError', 'savingEntUnauthorized'],
         content: (
             <span>{"Erreur d'enregistrement dans l'ENT"}</span>
         ),

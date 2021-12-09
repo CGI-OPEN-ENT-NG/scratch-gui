@@ -13,6 +13,10 @@ const DONE_UPDATING_BEFORE_COPY = 'scratch-gui/project-state/DONE_UPDATING_BEFOR
 const DONE_UPDATING_BEFORE_NEW = 'scratch-gui/project-state/DONE_UPDATING_BEFORE_NEW';
 const RETURN_TO_SHOWING = 'scratch-gui/project-state/RETURN_TO_SHOWING';
 const SET_PROJECT_ID = 'scratch-gui/project-state/SET_PROJECT_ID';
+const SET_OLD_PROJECT_ID = 'scratch-gui/project-state/SET_OLD_PROJECT_ID';
+const SET_SESSION_ID = 'scratch-gui/project-state/SET_USER_ID';
+const SET_OLD_SESSION_ID = 'scratch-gui/project-state/SET_OLD_SESSION_ID';
+const SET_USER_DISPLAY_NAME = 'scratch-gui/project-state/SET_USER_DISPLAY_NAME';
 const START_AUTO_UPDATING = 'scratch-gui/project-state/START_AUTO_UPDATING';
 const START_CREATING_NEW = 'scratch-gui/project-state/START_CREATING_NEW';
 const START_ERROR = 'scratch-gui/project-state/START_ERROR';
@@ -108,6 +112,10 @@ const initialState = {
     error: null,
     projectData: null,
     projectId: null,
+    oldProjectId: null,
+    sessionId: null,
+    oldSessionId: null,
+    userDisplayName: null,
     loadingState: LoadingState.NOT_LOADED
 };
 
@@ -115,6 +123,22 @@ const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
 
     switch (action.type) {
+    case SET_SESSION_ID:
+        return Object.assign({}, state, {
+            sessionId: action.sessionId
+        });
+    case SET_OLD_SESSION_ID:
+        return Object.assign({}, state, {
+            oldSessionId: action.oldSessionId
+        });
+    case SET_OLD_PROJECT_ID:
+        return Object.assign({}, state, {
+            oldProjectId: action.oldProjectId
+        });
+    case SET_USER_DISPLAY_NAME:
+        return Object.assign({}, state, {
+            userDisplayName: action.userDisplayName
+        });
     case DONE_CREATING_NEW:
         // We need to set project id since we just created new project on the server.
         // No need to load, we should have data already in vm.
@@ -470,6 +494,26 @@ const setProjectId = id => ({
     projectId: id
 });
 
+const setOldProjectId = id => ({
+    type: SET_OLD_PROJECT_ID,
+    oldProjectId: id
+});
+
+const setSessionId = sessionId => ({
+    type: SET_SESSION_ID,
+    sessionId: sessionId
+});
+
+const setOldSessionId = oldSessionId => ({
+    type: SET_OLD_SESSION_ID,
+    oldSessionId: oldSessionId
+});
+
+const setUserDisplayName = userDisplayName => ({
+    type: SET_USER_DISPLAY_NAME,
+    userDisplayName: userDisplayName
+});
+
 const requestNewProject = needSave => {
     if (needSave) return {type: START_UPDATING_BEFORE_CREATING_NEW};
     return {type: START_FETCHING_NEW};
@@ -537,5 +581,9 @@ export {
     requestNewProject,
     requestProjectUpload,
     saveProjectAsCopy,
-    setProjectId
+    setProjectId,
+    setOldProjectId,
+    setSessionId,
+    setOldSessionId,
+    setUserDisplayName
 };

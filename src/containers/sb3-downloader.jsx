@@ -6,10 +6,12 @@ import axios from 'axios';
 
 
 import {projectTitleInitialState} from '../reducers/project-title';
-import {showStandardAlert, closeAlertWithId} from '../reducers/alerts';
+import {showStandardAlert} from '../reducers/alerts';
 
 import EntConfig from '../config/ent-config';
 import downloadBlob from '../lib/download-blob';
+import {generateRandomStr, setSessionCookie} from '../lib/session-helper';
+import {setSessionId} from '../reducers/project-state';
 /**
  * Project saver component passes a downloadProject function to its child.
  * It expects this child to be a function with the signature
@@ -29,6 +31,7 @@ class SB3Downloader extends React.Component {
         super(props);
         bindAll(this, [
             'downloadProject',
+            'saveProjectToEnt',
             'updateProjectToEnt'
         ]);
     }
@@ -41,9 +44,72 @@ class SB3Downloader extends React.Component {
             downloadBlob(this.props.projectFilename, content);
         });
     }
+    saveProjectToEnt () {
+        const _this = this;
+        const accessId = this.props.reduxProjectId;
+        const oldAccessId = this.props.oldProjectId;
+        const oldSessionId = this.props.sessionId;
+        const newSessionId = generateRandomStr();
+
+        if (accessId && parseInt(accessId, 10) !== 0) {
+            this.updateProjectToEnt();
+        } else {
+            // nouveau fichier
+            this.props.saveProjectSb3().then(content => {
+                if (this.props.onSaveFinished) {
+                    this.props.onSaveFinished();
+                }
+
+                this.props.openSavingModal();
+
+                const reader = new FileReader();
+                reader.readAsDataURL(content);
+                reader.onloadend = () => {
+                    const readerRes = reader.result;
+
+                    const base64data = /base64,(.+)/.exec(readerRes)[1];
+
+                    // create
+                    axios.post(`${EntConfig.ENT_URL}scratch/file`, {
+                        'name': this.props.projectFilename,
+                        'mimetypes': 'application/octet-stream',
+                        'content': base64data,
+                        'content-type': 'application/octet-stream',
+                        'format': 'base64',
+                        'extension': 'sb3',
+                        'id': oldAccessId,
+                        'old_session_id': oldSessionId,
+                        'session_id': newSessionId
+                    }, {
+                        auth: {
+                            username: EntConfig.AUTH_BASIC_LOGIN,
+                            password: EntConfig.AUTH_BASIC_PASSWORD
+                        }
+                    }).then(() => {
+                        this.props.openSaveSuccessModal();
+                        setSessionCookie(newSessionId);
+                        this.props.setSessionId(newSessionId);
+                    })
+                        .catch(err => {
+                            switch (err.response.status) {
+                            case 401:
+                                this.props.openSaveUnauthorizedModal();
+                                break;
+                            default:
+                                this.props.openSaveFailedModal();
+                            }
+                        });
+                };
+            });
+        }
+    }
     updateProjectToEnt () {
         // update project (saving) (.sb3) to ENT
-        const _this = this;
+        const oldSessionId = this.props.sessionId;
+        const newSessionId = generateRandomStr();
+
+        const accessId = this.props.reduxProjectId;
+
         this.props.saveProjectSb3().then(content => {
             if (this.props.onSaveFinished) {
                 this.props.onSaveFinished();
@@ -56,38 +122,38 @@ class SB3Downloader extends React.Component {
             reader.onloadend = () => {
                 const readerRes = reader.result;
 
-                const mimetypes = /base64,(.+)/.exec(readerRes)[0].split(':')[1];
                 const base64data = /base64,(.+)/.exec(readerRes)[1];
 
-                const projectIdUrl = new URL(_this.props.reduxProjectId);
-                const entUrl = EntConfig.ENT_URL;
-                const entId = projectIdUrl.href.split('/').pop();
-
-                const base64basic = window.btoa(
-                    unescape(
-                        encodeURIComponent(`${EntConfig.AUTH_BASIC_LOGIN}:${EntConfig.AUTH_BASIC_PASSWORD}`)
-                    )
-                );
-
                 // update
-                axios.put(`${entUrl}scratch/file?ent_id=${entId}`, {
-                    name: this.props.projectFilename,
-                    mimetypes: mimetypes,
-                    content: base64data,
-                    format: 'base64'
+                axios.put(`${EntConfig.ENT_URL}scratch/file`, {
+                    'name': this.props.projectFilename,
+                    'mimetypes': 'application/octet-stream',
+                    'content': base64data,
+                    'content-type': 'application/octet-stream',
+                    'format': 'base64',
+                    'extension': 'sb3',
+                    'id': accessId,
+                    'old_session_id': oldSessionId,
+                    'session_id': newSessionId
                 }, {
-                    headers: {
-                        Authorization: `Basic ${base64basic}`
+                    auth: {
+                        username: EntConfig.AUTH_BASIC_LOGIN,
+                        password: EntConfig.AUTH_BASIC_PASSWORD
                     }
-                }).then(res => {
-                    if (res && res.status >= 200 && res.status < 300) {
-                        this.props.openSaveSuccessModal();
-                    } else {
-                        this.props.openSaveFailedModal();
-                    }
-                }).catch(() => {
-                    this.props.openSaveFailedModal();
-                });
+                }).then(() => {
+                    this.props.openSaveSuccessModal();
+                    setSessionCookie(newSessionId);
+                    this.props.setSessionId(newSessionId);
+                })
+                    .catch(err => {
+                        switch (err.response.status) {
+                        case 401:
+                            this.props.openSaveUnauthorizedModal();
+                            break;
+                        default:
+                            this.props.openSaveFailedModal();
+                        }
+                    });
             };
         });
     }
@@ -98,7 +164,7 @@ class SB3Downloader extends React.Component {
 
         return children(
             this.props.className,
-            this.props.useEntSave ? this.updateProjectToEnt : this.downloadProject
+            this.props.useEntSave ? this.saveProjectToEnt : this.downloadProject
         );
     }
 }
@@ -119,10 +185,13 @@ SB3Downloader.propTypes = {
     saveProjectSb3: PropTypes.func,
     useEntSave: PropTypes.bool,
     reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    oldProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setSessionId: PropTypes.func,
     openSavingModal: PropTypes.func,
     openSaveSuccessModal: PropTypes.func,
     openSaveFailedModal: PropTypes.func,
-    closeSaveSuccessModal: PropTypes.func
+    openSaveUnauthorizedModal: PropTypes.func
 };
 
 SB3Downloader.defaultProps = {
@@ -139,14 +208,17 @@ const mapDispatchToProps = dispatch => ({
     openSaveFailedModal: () => {
         dispatch(showStandardAlert('savingEntError'));
     },
-    closeSaveSuccessModal: () => {
-        dispatch(closeAlertWithId('savingEnt'));
-    }
+    openSaveUnauthorizedModal: () => {
+        dispatch(showStandardAlert('savingEntUnauthorized'));
+    },
+    setSessionId: sessionId => dispatch(setSessionId(sessionId))
 });
 
 const mapStateToProps = state => ({
     saveProjectSb3: state.scratchGui.vm.saveProjectSb3.bind(state.scratchGui.vm),
     reduxProjectId: state.scratchGui.projectState.projectId,
+    sessionId: state.scratchGui.projectState.sessionId,
+    oldProjectId: state.scratchGui.projectState.oldProjectId,
     projectFilename: getProjectFilename(state.scratchGui.projectTitle, projectTitleInitialState)
 });
 

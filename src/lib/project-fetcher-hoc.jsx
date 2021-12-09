@@ -15,13 +15,18 @@ import {
     getIsShowingProject,
     onFetchedProjectData,
     projectError,
-    setProjectId
+    setProjectId,
+    setOldProjectId,
+    setSessionId,
+    setUserDisplayName
 } from '../reducers/project-state';
 import {setProjectTitle} from '../reducers/project-title';
 import {
     activateTab,
     BLOCKS_TAB_INDEX
 } from '../reducers/editor-tab';
+
+import {generateRandomStr, getSessionCookie, setSessionCookie} from './session-helper';
 
 import log from './log';
 import storage from './storage';
@@ -72,18 +77,36 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject (projectId, loadingState) {
-            const base64basic = window.btoa(
-                unescape(
-                    encodeURIComponent(`${EntConfig.AUTH_BASIC_LOGIN}:${EntConfig.AUTH_BASIC_PASSWORD}`)
-                )
-            );
+            let sessionId = getSessionCookie();
+            if (!sessionId) {
+                sessionId = generateRandomStr();
+                setSessionCookie(sessionId);
+            }
+
+            this.props.setSessionId(sessionId);
+
             const config = {
                 method: 'get',
-                url: projectId,
-                headers: {
-                    Authorization: `Basic ${base64basic}`
+                url: `${EntConfig.ENT_URL}scratch/file?id=${projectId}&session_id=${sessionId}`,
+                auth: {
+                    username: EntConfig.AUTH_BASIC_LOGIN,
+                    password: EntConfig.AUTH_BASIC_PASSWORD
                 }
             };
+            if (!projectId || parseInt(projectId, 10) === 0) {
+                storage
+                    .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
+                    .then(projectAsset => {
+                        this.props.onFetchedProjectData(projectAsset.data, loadingState);
+                    })
+                    .catch(err => {
+                        this.props.onError(err);
+                        log.error(err);
+                    });
+                return;
+            }
+            this.props.setOldProjectId(projectId);
+
             return axios(config)
                 .then(response => {
                     if (response && response.data && response.data.base64File) {
@@ -95,21 +118,20 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                             bytes[i] = binaryString.charCodeAt(i);
                         }
                         this.props.onFetchedProjectData(bytes, loadingState);
-                    } else {
-                        storage
-                            .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
-                            .then(projectAsset => {
-                                this.props.onFetchedProjectData(projectAsset.data, loadingState);
-                            })
-                            .catch(err => {
-                                this.props.onError(err);
-                                log.error(err);
-                            });
                     }
                 })
                 .catch(err => {
                     this.props.onError(err);
                     log.error(err);
+                    storage
+                        .load(storage.AssetType.Project, '0', storage.DataFormat.JSON)
+                        .then(projectAsset => {
+                            this.props.onFetchedProjectData(projectAsset.data, loadingState);
+                        })
+                        .catch(err => {
+                            this.props.onError(err);
+                            log.error(err);
+                        });
                 });
         }
         render () {
@@ -126,7 +148,11 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 projectHost,
                 projectId,
                 reduxProjectId,
+                sessionId,
                 setProjectId: setProjectIdProp,
+                setOldProjectId: setOldProjectIdProp,
+                setSessionId: setSessionIdProp,
+                setUserDisplayName: setUserDisplayNameProp,
                 setProjectTitle: setProjectTitleProp,
                 /* eslint-enable no-unused-vars */
                 isFetchingWithId: isFetchingWithIdProp,
@@ -156,7 +182,11 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         projectHost: PropTypes.string,
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         setProjectId: PropTypes.func,
+        setOldProjectId: PropTypes.func,
+        setSessionId: PropTypes.func,
+        setUserDisplayName: PropTypes.func,
         setProjectTitle: PropTypes.func
     };
     ProjectFetcherComponent.defaultProps = {
@@ -170,7 +200,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         isLoadingProject: getIsLoading(state.scratchGui.projectState.loadingState),
         isShowingProject: getIsShowingProject(state.scratchGui.projectState.loadingState),
         loadingState: state.scratchGui.projectState.loadingState,
-        reduxProjectId: state.scratchGui.projectState.projectId
+        reduxProjectId: state.scratchGui.projectState.projectId,
+        sessionId: state.scratchGui.projectState.sessionId
     });
     const mapDispatchToProps = dispatch => ({
         onActivateTab: tab => dispatch(activateTab(tab)),
@@ -178,6 +209,9 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         onFetchedProjectData: (projectData, loadingState) =>
             dispatch(onFetchedProjectData(projectData, loadingState)),
         setProjectId: projectId => dispatch(setProjectId(projectId)),
+        setOldProjectId: oldProjectId => dispatch(setOldProjectId(oldProjectId)),
+        setSessionId: sessionId => dispatch(setSessionId(sessionId)),
+        setUserDisplayName: userDisplayName => dispatch(setUserDisplayName(userDisplayName)),
         setProjectTitle: title => dispatch(setProjectTitle(title)),
         onProjectUnchanged: () => dispatch(setProjectUnchanged())
     });
