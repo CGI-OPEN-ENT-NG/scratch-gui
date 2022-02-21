@@ -77,7 +77,7 @@ class SB3Downloader extends React.Component {
                         'content-type': 'application/octet-stream',
                         'format': 'base64',
                         'extension': 'sb3',
-                        'id': oldAccessId,
+                        'id': oldAccessId.toString(),
                         'old_session_id': oldSessionId,
                         'session_id': newSessionId
                     }, {
@@ -137,7 +137,7 @@ class SB3Downloader extends React.Component {
                     'content-type': 'application/octet-stream',
                     'format': 'base64',
                     'extension': 'sb3',
-                    'id': accessId,
+                    'id': accessId.toString(),
                     'old_session_id': oldSessionId,
                     'session_id': newSessionId
                 }, {
