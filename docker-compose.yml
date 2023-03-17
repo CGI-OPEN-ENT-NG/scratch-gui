@@ -1,0 +1,14 @@
+version: '2'
+services:
+  nodescratch:
+    image: node:16-alpine
+    container_name: scratch
+    working_dir: /home/node
+    ports:
+        - "8601:8601"
+    volumes:
+        - ./:/home/node
+        - ../springboard-ent/node_conf/.gitconfig:/home/node/.gitconfig
+        - ../springboard-ent/node_conf/.npmrc:/home/node/.npmrc
+        - ../springboard-ent/node_conf/.yarnrc:/home/node/.yarnrc
+    command: sh -c "yarn install && yarn start"

@@ -1,6 +1,50 @@
 # scratch-gui
 #### Scratch GUI is a set of React components that comprise the interface for creating and running Scratch 3.0 projects
 
+## Pré-requis
+Installer le module scratch-connector.
+(Attention au niveau de l'adresse de l'appli au niveau du module http-proxy qui se met par défaut en /scratch-connector alors qu'il devrait être /scratch)
+
+Url de scratch si vous lancez le docker en local : "http://localdev:8601"
+
+Vous devez également mettre en place deux connecteurs sur l'ENT :
+
+Un premier pour que scratch-gui puisse utiliser les APIs du module scratch-connector
+```
+Identifiant: "scratch"
+Nom d'affichage: "API to communicate with Scratch"
+URL: "#"
+Cible: "Page"
+Champs spécifiques OAuth
+Client ID: "scratch-api"
+Scope: "fr.openent.scratch.controllers.FileController|updateFile fr.openent.scratch.controllers.FileController|openFile fr.openent.scratch.controllers.FileController|getFile fr.openent.scratch.controllers.FileController|createFile"
+Code secret: "password"
+Mode d'identification: "Basic"
+```
+Un deuxième pour créer le connecteur dans la page "Mes applis" qui ouvre le bon lien scratch
+```
+Url de l'icône: "https://mathovore.fr/wp-content/uploads/2016/02/Logo-scratch.png"
+Paramètres du lien
+Identifiant: "scratch2"
+Nom d'affichage: "scratch"
+URL: "/scratch/open"
+Cible: "r"
+```
+
+Dans le fichier /src/config/ent-config.js, mettez les variables d'environnement pour interagir avec l'ENT :
+```dotenv
+    static AUTH_BASIC_LOGIN = 'scratch-api';
+    static AUTH_BASIC_PASSWORD = 'password';
+    static ENT_URL = 'http://localdev:8090/';
+```
+
+Lancer le docker scratch avec cette commande :
+```bash
+docker-compose up -d && docker logs -f scratch
+```
+
+Lancer Chrome sans les sécurités web pour que scratch puisse contacter l'ENT sans les problèmes CORS : https://stackoverflow.com/a/42024918
+
 ## Installation
 This requires you to have Git and Node.js installed.
 
